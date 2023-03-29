@@ -19,10 +19,13 @@
   },
   "keywords": [
     "homebridge-plugin",
-    "level-sense",
+    "ideal-water-care",
+    "icare",
     "temperature",
-    "humidity",
-    "contact-switch"
+    "water-quality",
+    "hot-tub",
+    "pool",
+    "spa"
   ],
   "license": "ISC",
   "files": [
