@@ -1,0 +1,26 @@
+{
+  "pluginAlias": "Ideal iCare Water Monitor",
+  "pluginType": "accessory",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Accessory Name",
+        "type": "string",
+        "required": true,
+        "default": "iCare"
+      },
+      "userId": {
+        "title": "iCare UserID",
+        "type": "string",
+        "required": true
+      },
+      "authToken": {
+        "title": "iCare Auth Token",
+        "type": "string",
+        "required": true
+      }
+    }
+  }
+}
