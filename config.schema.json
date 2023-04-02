@@ -52,7 +52,7 @@
           "type": "object",
           "properties": {
             "alertName": { "type": "string", "required": true },
-            "alertType": { "type": "string", "required": true, "enum": [ "Light", "Filter", "Leak", "Smoke" ] },
+            "alertType": { "type": "string", "required": true, "enum": [ "Light", "Contact", "Filter", "Leak", "Smoke" ] },
             "sensor": { "type": "string", "required": true,  "enum": [ "ORP", "pH", "TDS" ] },
             "comparator": { "type": "string", "required": true,  "enum": [ "Less than", "Equals", "More Than" ] },
             "value": { "type": "number", "required": true}

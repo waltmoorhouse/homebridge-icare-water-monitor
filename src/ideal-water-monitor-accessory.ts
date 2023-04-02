@@ -351,6 +351,7 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
   private getCustomService(hap: HAP, customAlert: CustomAlert): Service {
     switch (customAlert.alertType) {
       case 'Light': return this.customLightAlert(hap, customAlert)
+      case 'Contact': return this.customContactAlert(hap, customAlert)
       case 'Filter': return this.customFilterAlert(hap, customAlert)
       case 'Leak': return this.customLeakAlert(hap, customAlert)
       case 'Smoke': return this.customSmokeAlert(hap, customAlert)
@@ -365,24 +366,39 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
     return cla
   }
 
+  private customContactAlert(hap: HAP, customAlert: CustomAlert): Service {
+    const cca = new hap.Service.ContactSensor(customAlert.alertName, customAlert.alertName)
+    cca.getCharacteristic(hap.Characteristic.ContactSensorState)
+      .onGet(() => this.isCustomAlertIsTripped(customAlert) ?
+        hap.Characteristic.ContactSensorState.CONTACT_DETECTED :
+        hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED)
+    return cca
+  }
+
   private customFilterAlert(hap: HAP, customAlert: CustomAlert): Service {
     const cfa = new hap.Service.FilterMaintenance(customAlert.alertName, customAlert.alertName)
     cfa.getCharacteristic(hap.Characteristic.FilterChangeIndication)
-      .onGet(() => this.isCustomAlertIsTripped(customAlert))
+      .onGet(() => this.isCustomAlertIsTripped(customAlert) ?
+        hap.Characteristic.FilterChangeIndication.CHANGE_FILTER :
+        hap.Characteristic.FilterChangeIndication.FILTER_OK)
     return cfa
   }
 
   private customLeakAlert(hap: HAP, customAlert: CustomAlert): Service {
     const cla = new hap.Service.LeakSensor(customAlert.alertName, customAlert.alertName)
     cla.getCharacteristic(hap.Characteristic.LeakDetected)
-      .onGet(() => this.isCustomAlertIsTripped(customAlert))
+      .onGet(() => this.isCustomAlertIsTripped(customAlert) ?
+        hap.Characteristic.LeakDetected.LEAK_DETECTED :
+        hap.Characteristic.LeakDetected.LEAK_NOT_DETECTED)
     return cla
   }
 
   private customSmokeAlert(hap: HAP, customAlert: CustomAlert): Service {
     const csa = new hap.Service.SmokeSensor(customAlert.alertName, customAlert.alertName)
     csa.getCharacteristic(hap.Characteristic.SmokeDetected)
-      .onGet(() => this.isCustomAlertIsTripped(customAlert))
+      .onGet(() => this.isCustomAlertIsTripped(customAlert) ?
+        hap.Characteristic.SmokeDetected.SMOKE_DETECTED :
+        hap.Characteristic.SmokeDetected.SMOKE_NOT_DETECTED)
     return csa
   }
 
@@ -409,6 +425,7 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
   private getCharacteristicForAlertType(alertType: string): any {
     switch (alertType) {
       case 'Light': return this.api.hap.Characteristic.On
+      case 'Contact': return this.api.hap.Characteristic.ContactSensorState
       case 'Filter': return this.api.hap.Characteristic.FilterChangeIndication
       case 'Leak': return this.api.hap.Characteristic.LeakDetected
       case 'Smoke': return this.api.hap.Characteristic.SmokeDetected
