@@ -20,6 +20,44 @@
         "title": "iCare Auth Token",
         "type": "string",
         "required": true
+      },
+      "experimental": {
+        "title": " Use Experimental Water Quality Service",
+        "type": "boolean",
+        "default": false,
+        "required": true
+      },
+      "filterAlerts": {
+        "title": " Show Filter Change Alerts in Homebridge/HomeKit",
+        "type": "boolean",
+        "default": true,
+        "required": true
+      },
+      "chlorineAlerts": {
+        "title": " Show chlorine needed as Filter Change Alerts in Homebridge/HomeKit",
+        "type": "boolean",
+        "default": true,
+        "required": true
+      },
+      "qualityBulb": {
+        "title": " Add light bulb with water quality color in Homebridge/HomeKit",
+        "type": "boolean",
+        "default": true,
+        "required": true
+      },
+      "customAlerts": {
+        "type": "array",
+        "title": "Custom Alerts",
+        "items": {
+          "type": "object",
+          "properties": {
+            "alertName": { "type": "string", "required": true },
+            "alertType": { "type": "string", "required": true, "enum": [ "Light", "Filter", "Leak", "Smoke" ] },
+            "sensor": { "type": "string", "required": true,  "enum": [ "ORP", "pH", "TDS" ] },
+            "comparator": { "type": "string", "required": true,  "enum": [ "Less than", "Equals", "More Than" ] },
+            "value": { "type": "number", "required": true}
+          }
+        }
       }
     }
   }

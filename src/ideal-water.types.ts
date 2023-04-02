@@ -1,7 +1,20 @@
 export type ConfigOptions = {
+  experimental: boolean
   userId: string
   authToken: string
   name: string
+  filterAlerts: boolean
+  chlorineAlerts: boolean
+  qualityBulb: boolean
+  customAlerts: CustomAlert[]
+}
+
+export type CustomAlert = {
+  alertName: string
+  alertType: string
+  sensor: string
+  comparator: string
+  value: number
 }
 
 export type Dashboard = {
@@ -61,4 +74,81 @@ export type Report = {
 export type Weather = {
   id: number;
   temp: number;
+}
+
+export type Action = {
+  creation_date: string;
+  updated_at: string;
+  id: number;
+  action_type: ActionType;
+  product: Product | null;
+  value_recommendation: number | null;
+  value_done: null;
+  date_recommendation: string;
+  date_done: null | string;
+  status: Status;
+  message_formatted: string;
+  description_formatted: string;
+}
+
+export type ActionType = {
+  name: string;
+  description: string;
+  message: string;
+  id: number;
+  slug: string;
+  data_type: ActionDataType;
+}
+
+export type ActionDataType = {
+  name: Name;
+  unit: null | string;
+  id: number;
+  slug: Slug;
+}
+
+export enum Name {
+  FreeChlore = 'Free chlore',
+  ORPAverage = 'ORP average',
+  Optimisation = 'optimisation',
+}
+
+export enum Slug {
+  FreeChlore = 'free_chlore',
+  Optimisation = 'optimisation',
+  OrpAverage = 'orp_average',
+}
+
+export type Product = {
+  name: string;
+  description: string;
+  id: number;
+  reference: null;
+  conditioning: Conditioning;
+  type: Conditioning;
+  brand: Brand;
+  image_url: string;
+  technical_sheet_url: null;
+  is_pool_product: boolean;
+  is_pool_additional_product: boolean;
+  packing: Conditioning;
+  relevant: boolean;
+  formula_formatted: null;
+  unit_old: string;
+}
+
+export type Brand = {
+  id: number;
+  name: string;
+}
+
+export type Conditioning = {
+  translation: string;
+  id: number;
+  slug: string;
+}
+
+export enum Status {
+  Ok = 'ok',
+  Waiting = 'waiting',
 }
