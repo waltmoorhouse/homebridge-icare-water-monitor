@@ -11,15 +11,21 @@
         "required": true,
         "default": "iCare"
       },
-      "userId": {
-        "title": "iCare UserID",
+      "email": {
+        "title": "iCare App Email Address",
         "type": "string",
         "required": true
       },
-      "authToken": {
-        "title": "iCare Auth Token",
+      "password": {
+        "title": "iCare App Password",
         "type": "string",
         "required": true
+      },
+      "locale": {
+        "title": "iCare App Locale",
+        "type": "string",
+        "required": true,
+        "default": "en"
       },
       "experimental": {
         "title": " Use Experimental Water Quality Service",

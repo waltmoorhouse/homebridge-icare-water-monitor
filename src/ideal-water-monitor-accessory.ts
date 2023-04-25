@@ -1,14 +1,14 @@
 import {
-  Service,
+  AccessoryConfig,
+  AccessoryPlugin,
+  API,
   Characteristic,
   CharacteristicValue,
-  AccessoryPlugin,
-  Logging,
-  AccessoryConfig,
-  API,
-  Perms,
   Formats,
   HAP,
+  Logger,
+  Perms,
+  Service,
 } from 'homebridge'
 import {Action, ConfigOptions, CustomAlert, Dashboard} from './ideal-water.types'
 import {IdealWaterService} from './ideal-water.service'
@@ -42,21 +42,20 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
   private dashboard: Dashboard | undefined
   private actions: Action[] = []
 
-  constructor(private readonly log: Logging, accessoryConfig: AccessoryConfig, private readonly api: API) {
-    this.log = log
+  constructor(private readonly log: Logger, accessoryConfig: AccessoryConfig, private readonly api: API) {
     this.config = accessoryConfig as unknown as ConfigOptions
+    // Setup API service
     this.apiService = new IdealWaterService(this.config, log)
-    this.apiService.getDashboard().then(dash => this.dashboard = dash!)
-    this.apiService.getActions().then(actions => this.actions = actions!)
+    this.apiService.login().then(() => {
+      Promise.all([
+        this.apiService.getDashboard().then(dash => this.dashboard = dash!).catch(log.error),
+        this.apiService.getActions().then(actions => this.actions = actions!).catch(log.error)
+      ]).then(() => setInterval(this.pollForNewData.bind(this), 3600000))
+    }).catch(log.error)
+
     this.name = this.config.name
-
-    // Ensure workable config
-    if (!this.config.customAlerts) {
-      this.config.customAlerts = []
-    }
-
     // Define Experimental Characteristics
-    this.waterQualityCharacteristic = new api.hap.Characteristic('Water Quality', WaterQuality.UUID, {
+    this.waterQualityCharacteristic = new this.api.hap.Characteristic('Water Quality', WaterQuality.UUID, {
       format: Formats.UINT8,
       perms: [Perms.NOTIFY, Perms.PAIRED_READ],
       minValue: 0,
@@ -90,13 +89,18 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
       perms: [Perms.PAIRED_READ, Perms.NOTIFY],
     })
 
+    // Ensure workable config
+    if (!this.config.customAlerts) {
+      this.config.customAlerts = []
+    }
+
     // Information Service
     this.informationService = new api.hap.Service.AccessoryInformation()
       .setCharacteristic(api.hap.Characteristic.Manufacturer, 'Ideal Water Care')
       .setCharacteristic(api.hap.Characteristic.Model, 'iCare')
       .setCharacteristic(api.hap.Characteristic.ConfiguredName, this.config.name)
 
-    // Temperature Service Setup
+    // // Temperature Service Setup
     this.temperatureService = new api.hap.Service.TemperatureSensor()
     this.temperatureService.setCharacteristic(api.hap.Characteristic.Name, this.config.name + ' Temperature')
     this.temperatureService.getCharacteristic(api.hap.Characteristic.CurrentTemperature)
@@ -165,7 +169,6 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
     })
 
     log.info('Accessory finished initializing!')
-    setInterval(this.pollForNewData.bind(this), 3600000)
   }
 
   /*
@@ -209,7 +212,7 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
       this.waterQualityService.updateCharacteristic(this.oxygenReductionPotentialCharacteristic.displayName, this.getOrp())
       this.waterQualityService.updateCharacteristic(this.totalDissolvedSolidsCharacteristic.displayName, this.getTDS())
       this.waterQualityService.updateCharacteristic(this.phCharacteristic.displayName, this.getPh())
-    })
+    }).catch(this.log.error)
     this.apiService.getActions().then(actions => {
       if (actions) {
         this.actions = actions.filter(action => action.date_done === null)
@@ -225,7 +228,7 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
             this.getValueForSensor(customAlert.sensor))
         })
       }
-    })
+    }).catch(this.log.error)
   }
 
   /*
@@ -233,41 +236,41 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
    * Typical this only ever happens at the pairing process.
    */
   identify(): void {
-    this.log('Identify!')
+    this.log.info('Identify!')
   }
 
   getHue(): CharacteristicValue {
-    const hue = this.dashboard!.computed_state.color.h
+    const hue = this.dashboard?.computed_state.color.h || 0
     this.log.debug('iCare getHue -> %s', hue)
     return hue
   }
 
   getSaturation(): CharacteristicValue {
-    const sat = this.dashboard!.computed_state.color.s * 100
+    const sat = (this.dashboard?.computed_state.color.s || 0) * 100
     this.log.debug('iCare getSaturation -> %s%', sat)
     return sat
   }
 
   getLuminance(): CharacteristicValue {
-    const lum = this.dashboard!.computed_state.color.l * 100
+    const lum = (this.dashboard?.computed_state.color.l || 0) * 100
     this.log.debug('iCare getLuminance -> %s%', lum)
     return lum
   }
 
   getCurrentTemperature(): CharacteristicValue {
-    const temp = this.dashboard!.temperature.value
+    const temp = this.dashboard?.temperature.value || 0
     this.log.debug('iCare getCurrentTemperature -> %s', temp)
     return temp
   }
 
   getBatteryLevel(): CharacteristicValue {
-    const battery = this.dashboard!.battery.value
+    const battery = this.dashboard?.battery.value || 0
     this.log.debug('iCare getBatteryLevel -> %s', battery)
     return battery
   }
 
   getBatteryStatus(): CharacteristicValue {
-    const battery = this.dashboard!.battery.value > 15 ?
+    const battery = (this.dashboard?.battery.value || 0) > 15 ?
       this.api.hap.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL :
       this.api.hap.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
     this.log.debug('iCare getBatteryStatus -> %s', battery)
@@ -275,43 +278,43 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
   }
 
   getConductivity(): CharacteristicValue {
-    const conductivity = this.dashboard!.conductivity.value
+    const conductivity = this.dashboard?.conductivity.value || 0
     this.log.debug('iCare getConductivity -> %s', conductivity)
     return conductivity
   }
 
   getFreeChlorine(): CharacteristicValue {
-    const fc = this.dashboard!.free_chlore.value
+    const fc = this.dashboard?.free_chlore.value || 0
     this.log.debug('iCare getFreeChlorine -> %s', fc)
     return fc
   }
 
   getOrp(): CharacteristicValue {
-    const orp = this.dashboard!.orp.value
+    const orp = this.dashboard?.orp.value || 0
     this.log.debug('iCare getOrp -> %s', orp)
     return orp
   }
 
   getPh(): CharacteristicValue {
-    const ph = this.dashboard!.ph.value
+    const ph = this.dashboard?.ph.value || 0
     this.log.debug('iCare getPh -> %s', ph)
     return ph
   }
 
   getRSSI(): CharacteristicValue {
-    const rssi = this.dashboard!.rssi.value
+    const rssi = this.dashboard?.rssi.value || 0
     this.log.debug('iCare getRSSI -> %s', rssi)
     return rssi
   }
 
   getTDS(): CharacteristicValue {
-    const tds = this.dashboard!.tds.value
+    const tds = this.dashboard?.tds.value || 0
     this.log.debug('iCare getTDS -> %s', tds)
     return tds
   }
 
   getWaterQuality(): CharacteristicValue {
-    const wq = this.dashboard!.computed_state.value
+    const wq = this.dashboard?.computed_state.value || 0
     this.log.debug('iCare getWaterQuality -> %s', wq)
     return wq > 94 ? WaterQuality.EXCELLENT :
       wq > 84 ? WaterQuality.GOOD :
@@ -331,10 +334,13 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
   resetFilterIndication() {
     this.actions.filter(action => action.action_type.name.includes('clean'))
       .forEach(filterAlert => this.apiService.completeAction(filterAlert.id)
-        .then(this.pollForNewData.bind(this)))
+        .then(this.pollForNewData.bind(this)).catch(this.log.error))
   }
 
   getChlorineIndicator(): CharacteristicValue {
+    if (!this.actions) {
+      return false
+    }
     const filterAlert = this.actions.filter(action => action.action_type.name === 'chlore').length === 0 ?
       this.api.hap.Characteristic.FilterChangeIndication.FILTER_OK :
       this.api.hap.Characteristic.FilterChangeIndication.CHANGE_FILTER
@@ -343,9 +349,13 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
   }
 
   resetChlorineIndication() {
+    if (!this.actions) {
+      // eslint-disable-next-line quotes
+      this.log.error("Can't reset Chlorine Indication")
+    }
     this.actions.filter(action => action.action_type.name === 'chlore')
       .forEach(filterAlert => this.apiService.completeAction(filterAlert.id)
-        .then(this.pollForNewData.bind(this)))
+        .then(this.pollForNewData.bind(this)).catch(this.log.error))
   }
 
   private getCustomService(hap: HAP, customAlert: CustomAlert): Service {
@@ -422,6 +432,7 @@ export class IdealWaterMonitorAccessory implements AccessoryPlugin {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getCharacteristicForAlertType(alertType: string): any {
     switch (alertType) {
       case 'Light': return this.api.hap.Characteristic.On

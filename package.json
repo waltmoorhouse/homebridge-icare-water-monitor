@@ -1,7 +1,7 @@
 {
   "name": "homebridge-icare-water-monitor",
   "displayName": "Ideal iCare Water Monitor",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "A dynamic platform plugin for homebridge to provide access to the iCare Cloud.",
   "main": "lib/index.js",
   "scripts": {
