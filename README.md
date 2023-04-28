@@ -13,7 +13,7 @@ You will need your *user id* and  *authentication token* from the app to use thi
 
 # Donations
 
-If you find this useful and have a few extra bucks laying around,
-you can send me some via [PayPal](https://www.paypal.com/paypalme/waltmoorhouse)
-or [Venmo](https://venmo.com/?txn=pay&audience=public&recipients=Walt-Moorhouse),
+If you find this useful and have a few extra bucks lying around,
+you can send a donation with [PayPal](https://www.paypal.com/paypalme/waltmoorhouse) or
+[venmo](https://venmo.com/?txn=pay&audience=public&recipients=Walt-Moorhouse),
 so I can buy more IoT devices.  :-)
