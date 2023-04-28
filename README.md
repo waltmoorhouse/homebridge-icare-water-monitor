@@ -9,7 +9,7 @@ to HomeBridge, so you can add them to HomeKit.
 
 ## Configuration
 
-You will need your *user id* and  *authentication token* from the app to use this plug-in.
+You will need your user *email* and  *password* from the app to use this plug-in.
 
 # Donations
 
